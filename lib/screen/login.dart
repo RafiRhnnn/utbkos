@@ -16,6 +16,13 @@ class LoginScreen extends StatelessWidget {
       final email = emailController.text.trim();
       final password = passwordController.text.trim();
 
+      if (email.isEmpty || password.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter both email and password')),
+        );
+        return;
+      }
+
       try {
         final response = await Supabase.instance.client
             .from('users')
@@ -34,15 +41,23 @@ class LoginScreen extends StatelessWidget {
         }
 
         final role = response['role'];
+        final userEmail = response['email']; // Ambil email pengguna
+
         if (role == 'pemilik') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const PemilikKosScreen()),
+            MaterialPageRoute(
+              builder: (context) =>
+                  PemilikKosScreen(email: userEmail), // Kirim email
+            ),
           );
         } else if (role == 'pencari') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const PencariKosScreen()),
+            MaterialPageRoute(
+              builder: (context) =>
+                  PencariKosScreen(email: userEmail), // Kirim email
+            ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

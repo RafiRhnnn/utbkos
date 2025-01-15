@@ -5,12 +5,17 @@ import 'screen/login.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Supabase.initialize(
-    url:
-        'https://oxnyeqwreirlaxroipyh.supabase.co', // Ganti dengan URL Supabase Anda
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94bnllcXdyZWlybGF4cm9pcHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4NTg0MjksImV4cCI6MjA1MjQzNDQyOX0.JOSXribR1kjxLr3oe4nhErHqBWeLlf9MCRBbnfF5m80', // Ganti dengan Key Supabase Anda
-  );
+  try {
+    // Inisialisasi Supabase
+    await Supabase.initialize(
+      url: 'https://oxnyeqwreirlaxroipyh.supabase.co',
+      anonKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94bnllcXdyZWlybGF4cm9pcHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4NTg0MjksImV4cCI6MjA1MjQzNDQyOX0.JOSXribR1kjxLr3oe4nhErHqBWeLlf9MCRBbnfF5m80', // Ganti dengan Anon Key Supabase Anda
+    );
+  } catch (e) {
+    // Jika terjadi kesalahan saat inisialisasi
+    debugPrint('Error initializing Supabase: $e');
+  }
 
   runApp(const MyApp());
 }
