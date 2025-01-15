@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'screen/login.dart';
+import 'config/supabase_config.dart'; // Konfigurasi Supabase
+import 'screens/login/login_screen.dart'; // Mengimpor LoginScreen
+import 'screens/register/register_screen.dart'; // Mengimpor RegisterScreen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Inisialisasi Supabase
+    // Inisialisasi Supabase dengan konfigurasi dari file lain
     await Supabase.initialize(
-      url: 'https://oxnyeqwreirlaxroipyh.supabase.co',
-      anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94bnllcXdyZWlybGF4cm9pcHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4NTg0MjksImV4cCI6MjA1MjQzNDQyOX0.JOSXribR1kjxLr3oe4nhErHqBWeLlf9MCRBbnfF5m80', // Ganti dengan Anon Key Supabase Anda
+      url: SupabaseConfig.url,
+      anonKey: SupabaseConfig.anonKey,
     );
   } catch (e) {
     // Jika terjadi kesalahan saat inisialisasi
@@ -31,7 +32,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const LoginScreen(),
+      // Tambahkan navigasi berbasis rute
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+      },
     );
   }
 }
