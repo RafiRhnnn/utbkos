@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bottom_navy_bar/bottom_navy_bar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PencariKosScreen extends StatefulWidget {
@@ -12,6 +13,7 @@ class PencariKosScreen extends StatefulWidget {
 
 class _PencariKosScreenState extends State<PencariKosScreen> {
   late Future<Map<String, dynamic>?> _userData;
+  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -39,6 +41,15 @@ class _PencariKosScreenState extends State<PencariKosScreen> {
     }
   }
 
+  List<Widget> _buildPages(Map<String, dynamic>? userData) {
+    return [
+      const Center(child: Text('Halaman Favorit')),
+      const Center(child: Text('Halaman Pengaturan')),
+      const Center(child: Text('Halaman Pengaturan')),
+      Center(child: Text('Home Pencari Kos untuk ${userData?['email'] ?? ''}')),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,26 +68,37 @@ class _PencariKosScreenState extends State<PencariKosScreen> {
           }
 
           final userData = snapshot.data!;
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Email: ${userData['email']}',
-                  style: const TextStyle(fontSize: 18),
-                ),
-                Text(
-                  'Role: ${userData['role']}',
-                  style: const TextStyle(fontSize: 18),
-                ),
-                const SizedBox(height: 20),
-                // Tambahkan tampilan halaman Pencari Kos di sini
-                const Text('Tampilan Pencari Kos'),
-              ],
-            ),
-          );
+          return _buildPages(userData)[_currentIndex];
         },
+      ),
+      bottomNavigationBar: BottomNavyBar(
+        selectedIndex: _currentIndex,
+        showElevation: true,
+        onItemSelected: (index) => setState(() {
+          _currentIndex = index;
+        }),
+        items: [
+          BottomNavyBarItem(
+            icon: const Icon(Icons.home),
+            title: const Text('Home'),
+            activeColor: Colors.blue,
+          ),
+          BottomNavyBarItem(
+            icon: const Icon(Icons.favorite),
+            title: const Text('Favorit'),
+            activeColor: Colors.pink,
+          ),
+          BottomNavyBarItem(
+            icon: const Icon(Icons.settings),
+            title: const Text('Pengaturan'),
+            activeColor: Colors.green,
+          ),
+          BottomNavyBarItem(
+            icon: const Icon(Icons.person),
+            title: const Text('Profile'),
+            activeColor: Colors.green,
+          ),
+        ],
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bottom_navy_bar/bottom_navy_bar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PemilikKosScreen extends StatefulWidget {
@@ -12,6 +13,7 @@ class PemilikKosScreen extends StatefulWidget {
 
 class _PemilikKosScreenState extends State<PemilikKosScreen> {
   late Future<Map<String, dynamic>?> _userData;
+  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -39,11 +41,20 @@ class _PemilikKosScreenState extends State<PemilikKosScreen> {
     }
   }
 
+  List<Widget> _buildPages(Map<String, dynamic>? userData) {
+    return [
+      Center(child: Text('Halaman Home untuk ${userData?['email'] ?? ''}')),
+      Center(child: Text('Halaman Statistik')),
+      Center(child: Text('Halaman Pengaturan')),
+      Center(child: Text('Halaman profile')),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pemilik Kos'),
+        title: const Text('halaman pemilik kos'),
       ),
       body: FutureBuilder<Map<String, dynamic>?>(
         future: _userData,
@@ -57,26 +68,37 @@ class _PemilikKosScreenState extends State<PemilikKosScreen> {
           }
 
           final userData = snapshot.data!;
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Email: ${userData['email']}',
-                  style: const TextStyle(fontSize: 18),
-                ),
-                Text(
-                  'Role: ${userData['role']}',
-                  style: const TextStyle(fontSize: 18),
-                ),
-                const SizedBox(height: 20),
-                // Tambahkan tampilan halaman Pemilik Kos di sini
-                const Text('Tampilan Pemilik Kos'),
-              ],
-            ),
-          );
+          return _buildPages(userData)[_currentIndex];
         },
+      ),
+      bottomNavigationBar: BottomNavyBar(
+        selectedIndex: _currentIndex,
+        showElevation: true,
+        onItemSelected: (index) => setState(() {
+          _currentIndex = index;
+        }),
+        items: [
+          BottomNavyBarItem(
+            icon: const Icon(Icons.home),
+            title: const Text('Home'),
+            activeColor: Colors.blue,
+          ),
+          BottomNavyBarItem(
+            icon: const Icon(Icons.bar_chart),
+            title: const Text('Statistik'),
+            activeColor: Colors.green,
+          ),
+          BottomNavyBarItem(
+            icon: const Icon(Icons.settings),
+            title: const Text('Pengaturan'),
+            activeColor: Colors.red,
+          ),
+          BottomNavyBarItem(
+            icon: const Icon(Icons.person),
+            title: const Text('profile'),
+            activeColor: Colors.red,
+          ),
+        ],
       ),
     );
   }
