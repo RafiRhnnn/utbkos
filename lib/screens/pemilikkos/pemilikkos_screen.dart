@@ -89,7 +89,7 @@ class _PemilikKosScreenState extends State<PemilikKosScreen> {
             activeColor: Colors.green,
           ),
           BottomNavyBarItem(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.add),
             title: const Text('Pengaturan'),
             activeColor: Colors.red,
           ),
