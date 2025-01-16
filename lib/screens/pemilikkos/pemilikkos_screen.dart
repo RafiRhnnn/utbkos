@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:bottom_navy_bar/bottom_navy_bar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'tambah_screen.dart'; // Import halaman TambahScreen
+
 class PemilikKosScreen extends StatefulWidget {
   final String email;
 
@@ -45,7 +47,7 @@ class _PemilikKosScreenState extends State<PemilikKosScreen> {
     return [
       Center(child: Text('Halaman Home untuk ${userData?['email'] ?? ''}')),
       Center(child: Text('Halaman Statistik')),
-      Center(child: Text('Halaman Pengaturan')),
+      Center(child: Text('Halaman tambah')),
       Center(child: Text('Halaman profile')),
     ];
   }
@@ -54,7 +56,7 @@ class _PemilikKosScreenState extends State<PemilikKosScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('halaman pemilik kos'),
+        title: const Text('Halaman Pemilik Kos'),
       ),
       body: FutureBuilder<Map<String, dynamic>?>(
         future: _userData,
@@ -71,6 +73,20 @@ class _PemilikKosScreenState extends State<PemilikKosScreen> {
           return _buildPages(userData)[_currentIndex];
         },
       ),
+      floatingActionButton: _currentIndex ==
+              2 // Tampilkan hanya di halaman Pengaturan
+          ? FloatingActionButton(
+              onPressed: () {
+                // Navigasi ke TambahScreen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TambahScreen()),
+                );
+              },
+              child: const Icon(Icons.add),
+              backgroundColor: Colors.blue,
+            )
+          : null,
       bottomNavigationBar: BottomNavyBar(
         selectedIndex: _currentIndex,
         showElevation: true,
@@ -90,12 +106,12 @@ class _PemilikKosScreenState extends State<PemilikKosScreen> {
           ),
           BottomNavyBarItem(
             icon: const Icon(Icons.add),
-            title: const Text('Pengaturan'),
+            title: const Text('Tambah'),
             activeColor: Colors.red,
           ),
           BottomNavyBarItem(
             icon: const Icon(Icons.person),
-            title: const Text('profile'),
+            title: const Text('Profile'),
             activeColor: Colors.red,
           ),
         ],
