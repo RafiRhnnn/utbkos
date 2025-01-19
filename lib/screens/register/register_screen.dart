@@ -65,13 +65,13 @@ class RegisterScreen extends StatelessWidget {
               label: 'Password',
               obscureText: true,
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             DropdownButtonFormField<String>(
               value: roleController.text.isEmpty ? null : roleController.text,
               onChanged: (value) {
                 roleController.text = value ?? '';
               },
-              items: [
+              items: const [
                 DropdownMenuItem(
                   value: 'pemilik',
                   child: Text('Pemilik'),
@@ -81,7 +81,7 @@ class RegisterScreen extends StatelessWidget {
                   child: Text('Pencari'),
                 ),
               ],
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Role (pemilik/pencari)',
                 border: OutlineInputBorder(),
               ),

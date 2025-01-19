@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bottom_navy_bar/bottom_navy_bar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'tambah_screen.dart'; // Import halaman TambahScreen
+import 'tambah_screen.dart'; // Pastikan ini mengarah ke file tambah_screen.dart
 
 class PemilikKosScreen extends StatefulWidget {
   final String email;
@@ -14,42 +13,57 @@ class PemilikKosScreen extends StatefulWidget {
 }
 
 class _PemilikKosScreenState extends State<PemilikKosScreen> {
-  late Future<Map<String, dynamic>?> _userData;
+  late Future<List<Map<String, dynamic>>> _kosList;
   int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _userData = fetchUserData();
+    _kosList = fetchKosData();
   }
 
-  Future<Map<String, dynamic>?> fetchUserData() async {
+  Future<List<Map<String, dynamic>>> fetchKosData() async {
     try {
       final response = await Supabase.instance.client
-          .from('users')
-          .select('email, role')
-          .eq('email', widget.email) // Menggunakan email yang diteruskan
-          .maybeSingle();
+          .from('tambahkos')
+          .select()
+          .eq('email_pengguna', widget.email);
 
-      if (response == null) {
-        debugPrint('No data found for email: ${widget.email}');
-        return null;
-      }
-
-      return response;
+      return List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      debugPrint('Error fetching user data: $e');
-      return null;
+      debugPrint('Error fetching kos data: $e');
+      return [];
     }
   }
 
-  List<Widget> _buildPages(Map<String, dynamic>? userData) {
-    return [
-      Center(child: Text('Halaman Home untuk ${userData?['email'] ?? ''}')),
-      Center(child: Text('Halaman Statistik')),
-      Center(child: Text('Halaman tambah')),
-      Center(child: Text('Halaman profile')),
-    ];
+  void _showKosDetail(Map<String, dynamic> kosData) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(kosData['nama_kos'] ?? 'Detail Kos'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Image.asset('assets/images/kosan.jpg'),
+              const SizedBox(height: 8),
+              Text('Alamat: ${kosData['alamat_kos'] ?? ''}'),
+              Text('Jumlah Kamar: ${kosData['jumlah_kamar'] ?? ''}'),
+              Text('Harga Sewa: Rp ${kosData['harga_sewa'] ?? ''}/bulan'),
+              Text('Jenis Kos: ${kosData['jenis_kos'] ?? ''}'),
+              Text('Fasilitas: ${kosData['fasilitas'] ?? ''}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Tutup'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -58,41 +72,99 @@ class _PemilikKosScreenState extends State<PemilikKosScreen> {
       appBar: AppBar(
         title: const Text('Halaman Pemilik Kos'),
       ),
-      body: FutureBuilder<Map<String, dynamic>?>(
-        future: _userData,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: _currentIndex == 2
+          ? FutureBuilder<List<Map<String, dynamic>>>(
+              future: _kosList,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError ||
+                    snapshot.data == null ||
+                    snapshot.data!.isEmpty) {
+                  return const Center(child: Text('Belum ada data kos'));
+                }
 
-          if (snapshot.hasError || snapshot.data == null) {
-            return const Center(child: Text('Error loading profile data'));
-          }
+                final kosList = snapshot.data!;
 
-          final userData = snapshot.data!;
-          return _buildPages(userData)[_currentIndex];
-        },
-      ),
-      floatingActionButton: _currentIndex ==
-              2 // Tampilkan hanya di halaman Pengaturan
+                return GridView.builder(
+                  padding: const EdgeInsets.all(8.0),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 8.0,
+                    crossAxisSpacing: 8.0,
+                    childAspectRatio: 0.8,
+                  ),
+                  itemCount: kosList.length,
+                  itemBuilder: (context, index) {
+                    final kos = kosList[index];
+
+                    return GestureDetector(
+                      onTap: () => _showKosDetail(kos),
+                      child: Card(
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(10)),
+                                child: Image.asset(
+                                  'assets/images/kosan.jpg',
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                kos['nama_kos'] ?? '',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            )
+          : Center(
+              child: Text(
+                  _currentIndex == 0
+                      ? 'Halaman Home'
+                      : _currentIndex == 1
+                          ? 'Halaman Statistik'
+                          : 'Halaman Profile',
+                  style: const TextStyle(fontSize: 20)),
+            ),
+      floatingActionButton: _currentIndex == 2
           ? FloatingActionButton(
               onPressed: () {
-                // Navigasi ke TambahScreen
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const TambahScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => TambahScreen(email: widget.email),
+                  ),
                 );
               },
               child: const Icon(Icons.add),
-              backgroundColor: Colors.blue,
+              backgroundColor: Colors.red,
             )
           : null,
       bottomNavigationBar: BottomNavyBar(
         selectedIndex: _currentIndex,
         showElevation: true,
-        onItemSelected: (index) => setState(() {
-          _currentIndex = index;
-        }),
+        onItemSelected: (index) => setState(() => _currentIndex = index),
         items: [
           BottomNavyBarItem(
             icon: const Icon(Icons.home),
@@ -112,7 +184,7 @@ class _PemilikKosScreenState extends State<PemilikKosScreen> {
           BottomNavyBarItem(
             icon: const Icon(Icons.person),
             title: const Text('Profile'),
-            activeColor: Colors.red,
+            activeColor: Colors.orange,
           ),
         ],
       ),

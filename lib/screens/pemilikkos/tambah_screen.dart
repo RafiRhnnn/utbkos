@@ -1,118 +1,49 @@
-import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TambahScreen extends StatefulWidget {
-  const TambahScreen({super.key});
+  final String email;
+
+  const TambahScreen({super.key, required this.email});
 
   @override
-  State<TambahScreen> createState() => _TambahScreenState();
+  _TambahScreenState createState() => _TambahScreenState();
 }
 
 class _TambahScreenState extends State<TambahScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _supabase = Supabase.instance.client;
 
-  // Controllers untuk input data
-  final TextEditingController _namaKosController = TextEditingController();
-  final TextEditingController _alamatController = TextEditingController();
-  final TextEditingController _tipeKosController = TextEditingController();
-  final TextEditingController _jumlahKamarController = TextEditingController();
-  final TextEditingController _fasilitasKamarController =
-      TextEditingController();
-  final TextEditingController _fasilitasUmumController =
-      TextEditingController();
-  final TextEditingController _hargaSewaController = TextEditingController();
-  final TextEditingController _deskripsiController = TextEditingController();
-  final TextEditingController _kontakController = TextEditingController();
-  final TextEditingController _lokasiController = TextEditingController();
+  // Input Controllers
+  final _namaKosController = TextEditingController();
+  final _alamatKosController = TextEditingController();
+  final _jumlahKamarController = TextEditingController();
+  final _hargaSewaController = TextEditingController();
+  final _fasilitasController = TextEditingController();
 
-  List<File> _fotoKamar = [];
-  List<File> _fotoUmum = [];
-  List<File> _fotoEksterior = [];
-
-  Future<void> _pickFiles(List<File> fileList, String label) async {
-    final result = await FilePicker.platform.pickFiles(allowMultiple: true);
-
-    if (result != null) {
-      final files = result.paths.map((path) => File(path!)).toList();
-      setState(() {
-        if (label == 'kamar') {
-          _fotoKamar.addAll(files);
-        } else if (label == 'umum') {
-          _fotoUmum.addAll(files);
-        } else if (label == 'eksterior') {
-          _fotoEksterior.addAll(files);
-        }
-      });
-    }
-  }
-
-  Future<List<String>> _uploadFiles(List<File> files, String folder) async {
-    final urls = <String>[];
-
-    for (final file in files) {
-      final fileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
-      try {
-        await Supabase.instance.client.storage
-            .from(folder)
-            .upload(fileName, file);
-        final publicUrl = Supabase.instance.client.storage
-            .from(folder)
-            .getPublicUrl(fileName);
-        urls.add(publicUrl);
-      } catch (e) {
-        debugPrint('Error uploading file: $e');
-      }
-    }
-
-    return urls;
-  }
+  // Jenis Kos
+  String? _jenisKos;
+  final List<String> _jenisKosOptions = ['Campur', 'Laki-laki', 'Perempuan'];
 
   Future<void> _simpanData() async {
     if (_formKey.currentState!.validate()) {
       try {
-        // Upload files
-        final fotoKamarUrls = await _uploadFiles(_fotoKamar, 'foto_kamar');
-        final fotoUmumUrls = await _uploadFiles(_fotoUmum, 'foto_umum');
-        final fotoEksteriorUrls =
-            await _uploadFiles(_fotoEksterior, 'foto_eksterior');
-
-        // Simpan data ke Supabase
-        try {
-          final response =
-              await Supabase.instance.client.from('tambahkos').insert({
-            'nama_kos': _namaKosController.text,
-            'alamat': _alamatController.text,
-            'tipe_kos': _tipeKosController.text,
-            'jumlah_kamar': int.parse(_jumlahKamarController.text),
-            'fasilitas_kamar': _fasilitasKamarController.text,
-            'fasilitas_umum': _fasilitasUmumController.text,
-            'harga_sewa': _hargaSewaController.text,
-            'deskripsi': _deskripsiController.text,
-            'kontak': _kontakController.text,
-            'lokasi': _lokasiController.text,
-            'foto_kamar': fotoKamarUrls,
-            'foto_umum': fotoUmumUrls,
-            'foto_eksterior': fotoEksteriorUrls,
-          }).select();
-
-          if (response != null && response is List && response.isNotEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Data berhasil disimpan!')),
-            );
-            Navigator.pop(context);
-          } else {
-            throw Exception('Respons tidak valid atau kosong');
-          }
-        } catch (e) {
-          debugPrint('Error saving data: $e');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Gagal menyimpan data: $e')),
-          );
-        }
+        await _supabase.from('tambahkos').insert({
+          'nama_kos': _namaKosController.text,
+          'alamat_kos': _alamatKosController.text,
+          'jumlah_kamar': int.parse(_jumlahKamarController.text),
+          'harga_sewa': double.parse(_hargaSewaController.text),
+          'jenis_kos': _jenisKos,
+          'fasilitas': _fasilitasController.text,
+          'email_pengguna': widget.email, // Menggunakan email dari login
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Data berhasil disimpan!')),
+        );
+        _formKey.currentState!.reset();
+        setState(() {
+          _jenisKos = null;
+        });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal menyimpan data: $e')),
@@ -125,104 +56,106 @@ class _TambahScreenState extends State<TambahScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tambah Properti Kos'),
+        title: const Text('Tambah Kosan'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Form fields
-                ...[
-                  {'controller': _namaKosController, 'label': 'Nama Kos'},
-                  {'controller': _alamatController, 'label': 'Alamat Lengkap'},
-                  {
-                    'controller': _tipeKosController,
-                    'label': 'Tipe Kos (Pria/Wanita/Campur)'
-                  },
-                  {
-                    'controller': _jumlahKamarController,
-                    'label': 'Jumlah Kamar'
-                  },
-                  {
-                    'controller': _fasilitasKamarController,
-                    'label': 'Fasilitas Kamar'
-                  },
-                  {
-                    'controller': _fasilitasUmumController,
-                    'label': 'Fasilitas Umum'
-                  },
-                  {'controller': _hargaSewaController, 'label': 'Harga Sewa'},
-                  {
-                    'controller': _deskripsiController,
-                    'label': 'Deskripsi Kos'
-                  },
-                  {'controller': _kontakController, 'label': 'Kontak Pemilik'},
-                  {
-                    'controller': _lokasiController,
-                    'label': 'Lokasi di Peta (URL Google Maps)'
-                  },
-                ].map((field) {
-                  return TextFormField(
-                    controller: field['controller'] as TextEditingController,
-                    decoration:
-                        InputDecoration(labelText: field['label'] as String),
-                    validator: (value) => value == null || value.isEmpty
-                        ? '${field['label']} wajib diisi'
-                        : null,
+          child: ListView(
+            children: [
+              TextFormField(
+                controller: _namaKosController,
+                decoration: const InputDecoration(labelText: 'Nama Kos'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Nama kos harus diisi';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _alamatKosController,
+                decoration: const InputDecoration(labelText: 'Alamat Kos'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Alamat kos harus diisi';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _jumlahKamarController,
+                decoration:
+                    const InputDecoration(labelText: 'Jumlah Kamar Tersedia'),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Jumlah kamar harus diisi';
+                  }
+                  if (int.tryParse(value) == null) {
+                    return 'Masukkan angka yang valid';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _hargaSewaController,
+                decoration:
+                    const InputDecoration(labelText: 'Harga Sewa per Bulan'),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Harga sewa harus diisi';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Masukkan angka yang valid';
+                  }
+                  return null;
+                },
+              ),
+              DropdownButtonFormField<String>(
+                value: _jenisKos,
+                items: _jenisKosOptions.map((String jenis) {
+                  return DropdownMenuItem<String>(
+                    value: jenis,
+                    child: Text(jenis),
                   );
-                }),
-                const SizedBox(height: 16.0),
-                // Upload photo buttons
-                ...[
-                  {
-                    'label': 'Unggah Foto Kamar',
-                    'files': _fotoKamar,
-                    'key': 'kamar'
-                  },
-                  {
-                    'label': 'Unggah Foto Umum',
-                    'files': _fotoUmum,
-                    'key': 'umum'
-                  },
-                  {
-                    'label': 'Unggah Foto Eksterior',
-                    'files': _fotoEksterior,
-                    'key': 'eksterior'
-                  },
-                ].map((field) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => _pickFiles(
-                            field['files'] as List<File>,
-                            field['key'] as String),
-                        child: Text(field['label'] as String),
-                      ),
-                      Wrap(
-                        children: (field['files'] as List<File>)
-                            .map((file) => Padding(
-                                  padding: const EdgeInsets.all(4.0),
-                                  child: Text(file.path.split('/').last,
-                                      overflow: TextOverflow.ellipsis),
-                                ))
-                            .toList(),
-                      ),
-                    ],
-                  );
-                }),
-                const SizedBox(height: 16.0),
-                // Save button
-                ElevatedButton(
-                  onPressed: _simpanData,
-                  child: const Text('Simpan Data'),
-                ),
-              ],
-            ),
+                }).toList(),
+                decoration: const InputDecoration(labelText: 'Jenis Kos'),
+                onChanged: (value) {
+                  setState(() {
+                    _jenisKos = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Pilih jenis kos';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _fasilitasController,
+                decoration: const InputDecoration(labelText: 'Fasilitas'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Fasilitas harus diisi';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                initialValue: widget.email, // Email dari login
+                enabled: false, // Tidak dapat diubah oleh pengguna
+                decoration: const InputDecoration(labelText: 'Email Pengguna'),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _simpanData,
+                child: const Text('Simpan'),
+              ),
+            ],
           ),
         ),
       ),
